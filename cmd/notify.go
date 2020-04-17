@@ -30,7 +30,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/hanzoai/gochimp3"
+	"github.com/ory/gochimp3"
 	"github.com/markbates/pkger"
 	"github.com/markbates/pkger/pkging"
 	_ "github.com/ory/x/cmdx"
@@ -180,7 +180,6 @@ If you want to send only to a segment within that list, add the Segment ID as we
 			newMailchimpRequest(chimpKey, fmt.Sprintf("/lists/%s/segments/%d", listID, segmentID), &payload)
 			segmentOptions = payload.Options
 			segmentOptions.SavedSegmentId = segmentID
-			fmt.Printf("%+v\n", segmentOptions)
 		}
 
 		chimpCampaign, err := chimp.CreateCampaign(&gochimp3.CampaignCreationRequest{
@@ -209,6 +208,11 @@ If you want to send only to a segment within that list, add the Segment ID as we
 		fmt.Printf("Created campaign: %s", chimpCampaign.ID)
 		fmt.Println()
 
+		if flagx.MustGetBool(cmd, "no-send") {
+			fmt.Println("--no-send was specified, skipping sending campaign.")
+			return
+		}
+
 		chimpCampaignSent,err := chimp.SendCampaign(chimpCampaign.ID, &gochimp3.SendCampaignRequest{
 			CampaignId: chimpCampaign.ID,
 		})
@@ -234,4 +238,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	notifyCmd.Flags().Int("segment", 0, "The Mailchimp Segment ID")
+	notifyCmd.Flags().Bool("no-send", false, "Do not send the campaign")
 }
