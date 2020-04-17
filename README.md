@@ -1,2 +1,8 @@
 # release
-Release infrastructure for ORY and related components
+
+For use instructions check:
+
+```
+$ releaser help notify
+```
+
