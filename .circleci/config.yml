@@ -1,0 +1,22 @@
+version: 2.1
+
+orbs:
+  goreleaser: ory/goreleaser@0.0.30g
+
+workflows:
+  tbr:
+    jobs:
+      - goreleaser/test:
+      - goreleaser/release:
+          requires:
+            - goreleaser/test
+          filters:
+            branches:
+              ignore: /.*/
+      - notify-approval:
+          type: approval
+          requires:
+            - goreleaser/release
+      - goreleaser/notify:
+          requires:
+            - notify-approval

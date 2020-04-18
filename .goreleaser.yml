@@ -1,0 +1,65 @@
+# This is an example gorelease.yaml file with some sane defaults.
+# Make sure to check the documentation at http://gorelease.com
+project_name: release
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  -
+    id: release
+    flags:
+      - -a
+    ldflags:
+      - -s -w -X github.com/ory/release/cmd.Version={{.Tag}} -X github.com/ory/release/cmd.Commit={{.FullCommit}} -X github.com/ory/release/cmd.Date={{.Date}}
+    binary: release
+    env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+    goos:
+      - linux
+
+archives:
+  -
+    builds:
+      - release
+    id: release-archive
+    replacements:
+      linux: Linux
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+
+dockers:
+  -
+    dockerfile: Dockerfile
+    binaries:
+      - release
+    image_templates:
+      - "oryd/release:v{{ .Major }}"
+      - "oryd/release:v{{ .Major }}.{{ .Minor }}"
+      - "oryd/release:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
+      - "oryd/release:{{ .Version }}"
+      - "oryd/release:latest"
+  -
+    dockerfile: Dockerfile-alpine
+    binaries:
+      - release
+    image_templates:
+      - "oryd/release:v{{ .Major }}-alpine"
+      - "oryd/release:v{{ .Major }}.{{ .Minor }}-alpine"
+      - "oryd/release:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}-alpine"
+      - "oryd/release:{{ .Tag }}-alpine"
+      - "oryd/release:latest-alpine"
+
+release:
+  prerelease: auto
+  draft: true
