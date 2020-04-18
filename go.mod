@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/gobuffalo/here v0.6.2 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20200316172748-fd1f3374857d
+	github.com/goreleaser/godownloader v0.1.1-0.20191225124509-09b1c9cc978c // indirect
 	github.com/markbates/pkger v0.15.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ory/gochimp3 v0.0.0-20200417124117-ccd242db3655

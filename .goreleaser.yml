@@ -23,14 +23,13 @@ builds:
       - amd64
     goos:
       - linux
+      - darwin
 
 archives:
   -
     builds:
       - release
     id: release-archive
-    replacements:
-      linux: Linux
 
 snapshot:
   name_template: "{{ .Tag }}-next"
