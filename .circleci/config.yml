@@ -4,7 +4,7 @@ orbs:
   goreleaser: ory/goreleaser@0.1.1
 
 workflows:
-  tbr:
+  default:
     jobs:
       - goreleaser/test:
       - goreleaser/release:
@@ -13,10 +13,14 @@ workflows:
           filters:
             branches:
               ignore: /.*/
-      - notify-approval:
-          type: approval
+
+      - goreleaser/newsletter-draft:
           requires:
             - goreleaser/release
-      - goreleaser/notify:
+      - newsletter-approval:
+          type: approval
           requires:
-            - notify-approval
+            - goreleaser/newsletter-draft
+      - goreleaser/newsletter-send:
+          requires:
+            - newsletter-approval
