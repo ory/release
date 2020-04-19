@@ -6,7 +6,7 @@ orbs:
 workflows:
   default:
     jobs:
-      - goreleaser/test:
+      - goreleaser/test
       - goreleaser/release:
           requires:
             - goreleaser/test
