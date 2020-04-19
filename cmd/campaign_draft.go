@@ -64,7 +64,7 @@ If you want to send only to a segment within that list, add the Segment ID as we
 	release notify --segment 1234 ...
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		repoName := getenv("CIRCLE_PROJECT_NAME")
+		repoName := getenv("CIRCLE_PROJECT_REPONAME")
 		projectName := "ORY " + strings.Title(strings.ToLower(repoName))
 		tag := getenv("CIRCLE_TAG")
 		listID := args[0]

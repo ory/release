@@ -81,7 +81,7 @@ func newMailchimpRequest(apiKey, path string, payload interface{}) {
 
 func campaignID() string {
 	return fmt.Sprintf("%s-%s-%s",
-		getenv("CIRCLE_PROJECT_NAME"),
+		getenv("CIRCLE_PROJECT_REPONAME"),
 		getenv("CIRCLE_SHA1"),
 		getenv("CIRCLE_TAG"),
 	)
