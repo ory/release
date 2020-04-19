@@ -14,19 +14,33 @@ workflows:
           filters:
             branches:
               ignore: /.*/
+            tags:
+              only: /.*/
 
       - goreleaser/newsletter-draft:
           requires:
             - goreleaser/release
+          filters:
+            tags:
+              only: /.*/
       - slack/approval-notification:
           message: Pending approval
           channel: release-automation
           requires:
             - goreleaser/newsletter-draft
+          filters:
+            tags:
+              only: /.*/
       - newsletter-approval:
           type: approval
           requires:
             - goreleaser/newsletter-draft
+          filters:
+            tags:
+              only: /.*/
       - goreleaser/newsletter-send:
           requires:
             - newsletter-approval
+          filters:
+            tags:
+              only: /.*/
