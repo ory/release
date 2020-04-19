@@ -7,7 +7,10 @@ orbs:
 workflows:
   default:
     jobs:
-      - goreleaser/test
+      - goreleaser/test:
+        filters:
+          tags:
+            only: /.*/
       - goreleaser/release:
           requires:
             - goreleaser/test
