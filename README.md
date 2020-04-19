@@ -1,8 +1,8 @@
 # release
 
-For use instructions check:
+This CLI tool performs crucial steps in ORY's release pipeline. For more information, check:
 
 ```
-$ releaser help notify
+$ releaser help
 ```
 
