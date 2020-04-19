@@ -7,11 +7,13 @@ orbs:
 workflows:
   default:
     jobs:
-      - goreleaser/test:
-        filters:
-          tags:
-            only: /.*/
-      - goreleaser/release:
+      -
+        goreleaser/test:
+          filters:
+            tags:
+              only: /.*/
+      -
+        goreleaser/release:
           requires:
             - goreleaser/test
           filters:
@@ -20,13 +22,15 @@ workflows:
             tags:
               only: /.*/
 
-      - goreleaser/newsletter-draft:
+      -
+        goreleaser/newsletter-draft:
           requires:
             - goreleaser/release
           filters:
             tags:
               only: /.*/
-      - slack/approval-notification:
+      -
+        slack/approval-notification:
           message: Pending approval
           channel: release-automation
           requires:
@@ -34,14 +38,16 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - newsletter-approval:
+      -
+        newsletter-approval:
           type: approval
           requires:
             - goreleaser/newsletter-draft
           filters:
             tags:
               only: /.*/
-      - goreleaser/newsletter-send:
+      -
+        goreleaser/newsletter-send:
           requires:
             - newsletter-approval
           filters:
