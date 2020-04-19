@@ -17,101 +17,32 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"net/http"
-	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
-	"github.com/ory/gochimp3"
 	"github.com/markbates/pkger"
-	"github.com/markbates/pkger/pkging"
+	"github.com/ory/gochimp3"
 	_ "github.com/ory/x/cmdx"
 	"github.com/ory/x/flagx"
-	"github.com/ory/x/httpx"
 	"github.com/spf13/cobra"
 )
 
-func nerr(err error) {
-	if err == nil {
-		return
-	}
-	fatalf("An unexpected error occurred:\n\t%+v", err)
-}
-
-func fatalf(m string, args ...interface{}) {
-	fmt.Printf(m, args...)
-	fmt.Println()
-	os.Exit(1)
-}
-
-func getenv(key string) (v string) {
-	v = os.Getenv(key)
-	if len(v) == 0 {
-		fatalf("Environment variable " + key + " must be set.")
-	}
-	return
-}
-
-func readTemplate(file pkging.File, err error) *template.Template {
-	nerr(err)
-	defer file.Close()
-
-	contents, err := ioutil.ReadAll(file)
-	nerr(err)
-
-	t, err := template.New(file.Name()).Parse(string(contents))
-	nerr(err)
-	return t
-}
-
-func renderMarkdown(source []byte) template.HTML {
-	var markdownRenderer = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.HrefTargetBlank})
-	var markdownParser = parser.NewWithExtensions(
-		parser.NoIntraEmphasis | parser.Tables | parser.FencedCode |
-			parser.Autolink | parser.Strikethrough | parser.SpaceHeadings | parser.DefinitionLists)
-
-	rendered := string(markdown.ToHTML(source, markdownParser, markdownRenderer))
-	rendered = strings.ReplaceAll(rendered, "<p>", "")
-	rendered = strings.ReplaceAll(rendered, "</p>", "<br>")
-	return template.HTML(rendered)
-}
-
-func newMailchimpRequest(apiKey, path string, payload interface{}) {
-	u := url.URL{}
-	u.Scheme = "https"
-	u.Host = fmt.Sprintf(gochimp3.URIFormat, gochimp3.DatacenterRegex.FindString(apiKey))
-	u.Path = filepath.Join(gochimp3.Version, path)
-	req, err := http.NewRequest("GET", u.String(), nil)
-	nerr(err)
-	req.SetBasicAuth("gochimp3", apiKey)
-	client := httpx.NewResilientClientLatencyToleranceMedium(nil)
-	res, err := client.Do(req)
-	nerr(err)
-	defer res.Body.Close()
-	nerr(json.NewDecoder(res.Body).Decode(payload))
-}
-
-// notifyCmd represents the notify command
-var notifyCmd = &cobra.Command{
-	Use:   "notify list-id path/to/tag-message path/to/changelog.md",
+// campaignDraftCmd represents the notify command
+var campaignDraftCmd = &cobra.Command{
+	Use:   "draft list-id path/to/tag-message path/to/changelog.md",
 	Args:  cobra.ExactArgs(3),
-	Short: "Sends out a release notification via the Mailchimp Campaign / Newsletter API",
+	Short: "Creates a draft release notification via the Mailchimp Campaign / Newsletter API",
 	Long: `TL;DR
 
 	$ git tag -l --format='%(contents)' v0.0.103 > tag-message.txt
 	$ # run changelog generator > changelog.md
 	$ MAILCHIMP_API_KEY=... \
+		CIRCLE_SHA1=... \
 		CIRCLE_TAG=... \ # This is set automatically in CircleCI Jobs
 		CIRCLE_PROJECT_REPONAME=... \ # This is set automatically in CircleCI Jobs
-		release notify \
+		release campaign draft \
 			--segment-id ... \ # optional - e.g. only to people interested in ORY Hydra
 			list-id-1234123 \
 			./tag-message.md \
@@ -126,6 +57,7 @@ Additionally, these CI environment variables are expected to be set as well:
 
 	$CIRCLE_PROJECT_REPONAME (e.g. hydra)
 	$CIRCLE_TAG (e.g. v1.4.5-beta.1)
+	$CIRCLE_SHA1
 
 If you want to send only to a segment within that list, add the Segment ID as well:
 
@@ -189,7 +121,7 @@ If you want to send only to a segment within that list, add the Segment ID as we
 				SegmentOptions: segmentOptions,
 			},
 			Settings: gochimp3.CampaignCreationSettings{
-				Title:        fmt.Sprintf("%s %s Release Announcement", projectName, tag),
+				Title:        campaignID(),
 				SubjectLine:  fmt.Sprintf("%s %s has been released!", projectName, tag),
 				FromName:     "ORY",
 				ReplyTo:      "hi@ory.sh",
@@ -208,35 +140,11 @@ If you want to send only to a segment within that list, add the Segment ID as we
 		fmt.Printf("Created campaign: %s", chimpCampaign.ID)
 		fmt.Println()
 
-		if flagx.MustGetBool(cmd, "no-send") {
-			fmt.Println("--no-send was specified, skipping sending campaign.")
-			return
-		}
-
-		chimpCampaignSent,err := chimp.SendCampaign(chimpCampaign.ID, &gochimp3.SendCampaignRequest{
-			CampaignId: chimpCampaign.ID,
-		})
-		nerr(err)
-
-		if !chimpCampaignSent{
-			fatalf("Unable to send MailChimp Campaign: %s", chimpCampaign.ID)
-		}
-
 		fmt.Println("Sent campaign!")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(notifyCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// notifyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	notifyCmd.Flags().Int("segment", 0, "The Mailchimp Segment ID")
-	notifyCmd.Flags().Bool("no-send", false, "Do not send the campaign")
+	campaignCmd.AddCommand(campaignDraftCmd)
+	campaignDraftCmd.Flags().Int("segment", 0, "The Mailchimp Segment ID")
 }
