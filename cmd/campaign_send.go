@@ -25,7 +25,8 @@ import (
 
 // campaignSendCmd represents the send command
 var campaignSendCmd = &cobra.Command{
-	Use: "send",
+	Use:  "send <list-id>",
+	Args: cobra.ExactArgs(1),
 	Long: `Send a drafted campaign.
 
 Example:
@@ -34,17 +35,30 @@ Example:
 		CIRCLE_SHA1=... \
 		CIRCLE_TAG=... \ # This is set automatically in CircleCI Jobs
 		CIRCLE_PROJECT_REPONAME=... \ # This is set automatically in CircleCI Jobs
-		release campaign send
+		release campaign send 12345
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		chimpKey := getenv("MAILCHIMP_API_KEY")
 		chimp := gochimp3.New(chimpKey)
+		campaignID := campaignID()
 
-		campaigns, err := chimp.GetCampaigns(&gochimp3.CampaignQueryParams{Status: "save"})
+		listID := args[0]
+		campaigns, err := chimp.GetCampaigns(&gochimp3.CampaignQueryParams{
+			Status:    "save",
+			SortField: "create_time",
+			SortDir:   "DESC",
+			ListId:    listID,
+			ExtendedQueryParams: gochimp3.ExtendedQueryParams{
+				Count: 100,
+			},
+		})
 		nerr(err)
 
+		fmt.Printf(`Looking for campaign "%s"`, campaignID)
+		fmt.Println()
+
 		for _, c := range campaigns.Campaigns {
-			if c.Settings.Title == campaignID() {
+			if c.Settings.Title == campaignID {
 				if flagx.MustGetBool(cmd, "dry") {
 					fmt.Println("Skipping send because --dry was passed.")
 					return
@@ -60,8 +74,11 @@ Example:
 				}
 
 				fmt.Println("Sent campaign!")
+				return
 			}
 		}
+
+		fatalf(`Expected to find campaign "%s" but it could not be found.'`, campaignID)
 	},
 }
 
