@@ -1,12 +1,6 @@
-
-
-
-
-
 **Bug Fixes:**
 
 * Remove changelog heading from template ([d1e330c](https://github.com/ory/release/commit/d1e330c29e7a252e8355a983d3561d162b4ef770))
-
 
 **Features:**
 
