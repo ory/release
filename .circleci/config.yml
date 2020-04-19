@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   goreleaser: ory/goreleaser@0.1.1
+  slack: circleci/slack@3.4.2
 
 workflows:
   default:
@@ -17,6 +18,11 @@ workflows:
       - goreleaser/newsletter-draft:
           requires:
             - goreleaser/release
+      - slack/approval-notification:
+          message: Pending approval
+          channel: release-automation
+          requires:
+            - goreleaser/newsletter-draft
       - newsletter-approval:
           type: approval
           requires:
