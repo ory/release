@@ -8,6 +8,8 @@ env:
 before:
   hooks:
     - go mod download
+    - go install github.com/markbates/pkger
+    - pkger
 
 builds:
   -
