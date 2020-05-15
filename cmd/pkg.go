@@ -55,7 +55,7 @@ func readTemplate(file pkging.File, err error) *template.Template {
 func renderMarkdown(source []byte) template.HTML {
 	var markdownRenderer = html.NewRenderer(html.RendererOptions{Flags: html.CommonFlags | html.HrefTargetBlank})
 	var markdownParser = parser.NewWithExtensions(
-		parser.NoIntraEmphasis | parser.Tables | parser.FencedCode |
+		parser.NoIntraEmphasis | parser.Tables | parser.FencedCode | parser.NoEmptyLineBeforeBlock |
 			parser.Autolink | parser.Strikethrough | parser.SpaceHeadings | parser.DefinitionLists)
 
 	rendered := string(markdown.ToHTML(source, markdownParser, markdownRenderer))
