@@ -137,7 +137,7 @@ If you want to send only to a segment within that list, add the Segment ID as we
 		})
 		nerr(err)
 
-		fmt.Printf( `Created campaign "%s" (%s)`,chimpCampaign.Settings.Title, chimpCampaign.ID)
+		fmt.Printf(`Created campaign "%s" (%s)`, chimpCampaign.Settings.Title, chimpCampaign.ID)
 		fmt.Println()
 
 		fmt.Println("Campaign drafted")

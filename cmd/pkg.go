@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,13 +12,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/markbates/pkger"
+	"github.com/ory/jsonschema/v3"
+	"github.com/ory/x/viperx"
+	"github.com/tidwall/sjson"
+
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/markbates/pkger/pkging"
 	"github.com/ory/gochimp3"
+	_ "github.com/ory/jsonschema/v3/httploader"
 	"github.com/ory/x/httpx"
 )
+
+var _ = pkger.Include("../.schema")
 
 func nerr(err error) {
 	if err == nil {
@@ -85,4 +94,45 @@ func campaignID() string {
 		getenv("CIRCLE_SHA1"),
 		getenv("CIRCLE_TAG"),
 	)
+}
+
+func addVersionToMetaSchema(renderFile, refFormat, newVersion string) {
+	ref := fmt.Sprintf(refFormat, newVersion)
+	newVersionEntry := fmt.Sprintf(`
+{
+	"allOf": [
+		{
+			"properties": {
+				"version": {
+					"const": "%s"
+				}
+			}
+		},
+		{
+			"$ref": "%s"
+		}
+	]
+}`, newVersion, ref)
+
+	versionSchema, err := ioutil.ReadFile(renderFile)
+	nerr(err)
+
+	renderedVersionSchema, err := sjson.SetBytes(versionSchema, "oneOf.-1", json.RawMessage(newVersionEntry))
+	nerr(err)
+
+	f, err := pkger.Open("/.schema/version_meta.schema.json")
+	nerr(err)
+	metaSchema, err := ioutil.ReadAll(f)
+	nerr(err)
+	nerr(f.Close())
+	schema, err := jsonschema.CompileString("version_meta.schema.json", string(metaSchema))
+	nerr(err)
+
+	err = schema.Validate(bytes.NewBuffer(renderedVersionSchema))
+	if err != nil {
+		viperx.PrintHumanReadableValidationErrors(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	nerr(ioutil.WriteFile(renderFile, renderedVersionSchema, 0600))
 }

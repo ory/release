@@ -18,5 +18,5 @@ package main
 import "github.com/ory/release/cmd"
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }
